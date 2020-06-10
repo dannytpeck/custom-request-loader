@@ -6,19 +6,17 @@ const base = new Airtable({ apiKey: 'keyCxnlep0bgotSrX' }).base('appHXXoVD1tn9QA
 
 import Header from './header';
 import Footer from './footer';
-import Modal from './modal';
 
-function clientsReducer(state, action) {
+function reducer(state, action) {
   return [...state, ...action];
 }
 
 /* globals $ */
 function App() {
-  const [selectedClient, setSelectedClient] = useState(null);
   const [activities, setActivities] = useState([]);
 
   const [clients, dispatch] = React.useReducer(
-    clientsReducer,
+    reducer,
     [] // initial clients
   );
 
@@ -38,44 +36,16 @@ function App() {
 
   }, []); // Pass empty array to only run once on mount
 
-  function massUpload() {
-    // Open the modal
-    $('#uploadModal').modal();
-
-    let timer = 0;
-
-    // Upload to app clients
-    const filteredClients = clients.filter(client => {
-      //return client.fields['Has App'] === 'Yes';
-      return client.fields['Has App'] === 'Yes' && client.fields['Uploaded'] !== '1';
-    });
-
-    // Set counter based on filteredClients
-    $('#counter').html(`<p><span id="finishedUploads">0</span> / ${filteredClients.length}</p>`);
-
-    filteredClients.map(client => {
-      // 4 seconds between ajax requests, because limeade is bad and returns 500 errors if we go too fast
-      // These requests average about 2.6-3.4 seconds but we've seen limeade take up to 4.4s, either way this
-      // guarantees concurrent calls will be rare, which seem to be the source of our woes
-      timer += 4000;
-      setTimeout(() => {
-        uploadChallenge(client);
-      }, timer);
-    });
-  }
-
   function uploadChallenge(client) {
-    // Open the modal
-    $('#uploadModal').modal();
+    const employerName = client.fields['Limeade e='];
 
-    const startDate = '2020-04-15';
-    const endDate = '2020-12-01';
-
-    const imageUrl = 'https://images.limeade.com/PDW/6fad1d13-2edd-45f2-9262-30d31bcccf13-large.jpg';
-    const title = 'COVID-19 Resources on the Aduro App';
-    const activityText = 'download the Aduro app';
-    const shortDescription = 'Download the Aduro App for timely resources and tools to help in the midst of uncertainty surrounding COVID-19.';
-    const longDescription = '<p>Download the Aduro app to access new learning sessions each week that provide tools and resources for all areas of life and well-being to help you navigate the changes and build resilience in the midst of uncertain times.</p><p>When we\'re up against change, uncertainty, and stress, resilience is the key to navigate life and emerge with more happiness and satisfaction. Each week, new learning sessions are delivered straight to your ADURO app so that you can access it wherever you are, right when you need it.</p><p>&nbsp;</p><p>Download the Aduro App via <a style="color: #4f81bd;" href="https://apps.apple.com/us/app/aduro/id1199288368?mt=8" target="_blank" rel="noopener">this link</a> for Apple products.</p><p>Download the Aduro App via <a style="color: #4f81bd;" href="https://play.google.com/store/apps/details?id=com.aduro.amp&amp;hl=en_US" target="_blank" rel="noopener">this link</a> for android users.</p>';
+    const startDate = '6/11/2020';
+    const endDate = '6/15/2020';
+    const imageUrl = 'https://images.limeade.com/PDW/ac93a008-e318-49b9-9eba-93a83d5edfcd-large.jpg';
+    const title = 'System Maintenance';
+    const activityText = 'do the activity in the description';
+    const shortDescription = 'Starting 6/13/2020 12:00 am PST and continuing through the weekend, we will be performing system maintenance on some of our online services.';
+    const longDescription = '<p>It is possible that you may experience interruptions when trying to access some of our services. Please feel free to reach out to support if you have any issues.</p>';
 
     const data = {
       'AboutChallenge': longDescription,
@@ -118,40 +88,26 @@ function App() {
       contentType: 'application/json; charset=utf-8'
     }).done((result) => {
 
-      // Advance the counter
-      let count = Number($('#finishedUploads').html());
-      $('#finishedUploads').html(count + 1);
-
-      $('#uploadModal .modal-body').append(`
-        <div class="alert alert-success" role="alert">
-          <p>Uploaded Tile for <a href="${client.fields['Domain']}/ControlPanel/RoleAdmin/ViewChallenges.aspx?type=employer" target="_blank"><strong>${client.fields['Account Name']}</strong></a></p>
-          <p class="mb-0"><strong>Challenge Id</strong></p>
-        <p><a href="${client.fields['Domain']}/admin/program-designer/activities/activity/${result.Data.ChallengeId}" target="_blank">${result.Data.ChallengeId}</a></p>
-        </div>
-      `);
+      // Change row to green on success (and remove red if present)
+      $('#' + employerName.replace(/\s*/g, '')).removeClass('bg-danger');
+      $('#' + employerName.replace(/\s*/g, '')).addClass('bg-success text-white');
+      $('#' + employerName.replace(/\s*/g, '') + ' .challenge-id').html(`<a href="${client.fields['Domain']}/admin/program-designer/activities/activity/${result.Data.ChallengeId}" target="_blank">${result.Data.ChallengeId}</a>`);
 
     }).fail((request, status, error) => {
+      $('#' + employerName.replace(/\s*/g, '')).addClass('bg-danger text-white');
       console.error(request.status);
       console.error(request.responseText);
-      console.log('Create challenge failed for client ' + client.fields['Limeade e=']);
+      console.log('Create challenge failed for client', client.fields['Limeade e=']);
     });
 
   }
 
-  function selectClient(e) {
-    clients.forEach((client) => {
-      if (client.fields['Limeade e='] === e.target.value) {
-        setSelectedClient(client);
-      }
-    });
-  }
-
-  function renderEmployerNames() {
+  function renderClients() {
     const sortedClients = [...clients];
 
     sortedClients.sort((a, b) => {
-      const nameA = a.fields['Limeade e='].toLowerCase();
-      const nameB = b.fields['Limeade e='].toLowerCase();
+      const nameA = a.fields['Account Name'].toLowerCase();
+      const nameB = b.fields['Account Name'].toLowerCase();
       if (nameA < nameB) {
         return -1;
       }
@@ -162,37 +118,41 @@ function App() {
     });
 
     return sortedClients.map((client) => {
-      return <option key={client.id}>{client.fields['Limeade e=']}</option>;
+      const employerName = client.fields['Limeade e='];
+
+      return (
+        <tr id={employerName.replace(/\s*/g, '')} key={employerName}>
+          <td>
+            <a href={client.fields['Domain'] + '/ControlPanel/RoleAdmin/ViewChallenges.aspx?type=employer'} target="_blank">{client.fields['Account Name']}</a>
+          </td>
+          <td className="challenge-id"></td>
+          <td>
+            <button type="button" className="btn btn-primary" onClick={() => uploadChallenge(client)}>Upload</button>
+          </td>
+        </tr>
+      );
     });
+
   }
 
   return (
     <div id="app">
       <Header />
 
-      <div className="form-group">
-        <label htmlFor="employerName">EmployerName</label>
-        <select id="employerName" className="form-control custom-select" onChange={selectClient}>
-          <option defaultValue>Select Employer</option>
-          {renderEmployerNames()}
-        </select>
-      </div>
-
-      <div className="row">
-        <div className="col text-left">
-          <button type="button" className="btn btn-primary" id="uploadButton" onClick={() => uploadChallenge(selectedClient)}>Single Upload</button>
-          <img id="spinner" src="images/spinner.svg" />
-        </div>
-
-        <div className="col text-right">
-          <button type="button" className="btn btn-danger" id="uploadButton" onClick={() => massUpload()}>Mass Upload</button>
-          <img id="spinner" src="images/spinner.svg" />
-        </div>
-      </div>
+      <table className="table table-hover table-striped" id="activities">
+        <thead>
+          <tr>
+            <th scope="col">Account Name</th>
+            <th scope="col">Challenge Id</th>
+            <th scope="col">Upload</th>
+          </tr>
+        </thead>
+        <tbody>
+          {renderClients()}
+        </tbody>
+      </table>
 
       <Footer />
-
-      <Modal />
 
     </div>
   );
