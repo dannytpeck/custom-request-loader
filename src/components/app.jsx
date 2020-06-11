@@ -55,6 +55,7 @@ function App() {
       },
       'ActivityType': activityText,
       'AmountUnit': '',
+      'ButtonText': 'CLOSE',
       'ChallengeLogoThumbURL': imageUrl,
       'ChallengeLogoURL': imageUrl,
       'ChallengeTarget': 1,
@@ -70,10 +71,12 @@ function App() {
       'IsSelfReportEnabled': false,
       'IsTeamChallenge': false,
       'Name': title,
+      'PartnerId': 1,
       'ShortDescription': shortDescription,
       'ShowExtendedDescription': true,
       'ShowWeeklyCalendar': false,
       'StartDate': startDate,
+      'TargetUrl': '/Home?sametab=true',
       'TeamSize': null
     };
 
