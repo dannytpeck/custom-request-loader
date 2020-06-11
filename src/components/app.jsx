@@ -67,11 +67,11 @@ function App() {
       'Frequency': 'None',
       'IsDeviceEnabled': false,
       'IsFeatured': null,
-      'IsSelfReportEnabled': true,
+      'IsSelfReportEnabled': false,
       'IsTeamChallenge': false,
       'Name': title,
       'ShortDescription': shortDescription,
-      'ShowExtendedDescription': false,
+      'ShowExtendedDescription': true,
       'ShowWeeklyCalendar': false,
       'StartDate': startDate,
       'TeamSize': null
